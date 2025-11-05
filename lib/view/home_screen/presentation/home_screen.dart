@@ -1,3 +1,4 @@
+import 'package:dissaster_mgmnt_app/view/home_screen/presentation/map_screens.dart';
 import 'package:flutter/material.dart';
 import 'map_screen.dart';
 import 'sos_screen.dart';
@@ -13,7 +14,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
 
-  final _screens = [const MapScreen(), const SosScreen(), const RescueScreen()];
+  final _screens = [MapScreen(), const SosScreen(), const RescueScreen()];
 
   void _onItemTapped(int index) {
     setState(() => _selectedIndex = index);

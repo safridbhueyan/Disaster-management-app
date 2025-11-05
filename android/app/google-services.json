@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "445794335111",
+    "project_id": "disasterlink-22fd5",
+    "storage_bucket": "disasterlink-22fd5.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:445794335111:android:99e7023cb820f78a54fb22",
+        "android_client_info": {
+          "package_name": "com.example.dissaster_mgmnt_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB5jThQIQ5rVCFxGzayL1ilIYD8B-JIiLU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

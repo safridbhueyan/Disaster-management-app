@@ -1,26 +1,39 @@
+import 'package:dissaster_mgmnt_app/view/auth_screens/Riverpod/auth_provider.dart';
 import 'package:dissaster_mgmnt_app/view/auth_screens/presentation/sign_in_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 
-class SignUpScreen extends ConsumerStatefulWidget {
+class SignUpScreen extends ConsumerWidget {
   const SignUpScreen({super.key});
 
   @override
-  ConsumerState<SignUpScreen> createState() => _SignUpScreenState();
-}
-
-class _SignUpScreenState extends ConsumerState<SignUpScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _emailCtrl = TextEditingController();
-  final _passwordCtrl = TextEditingController();
-  final _nameCtrl = TextEditingController();
-  bool _isLoading = false;
-  bool _obscure = true;
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final nameCtrl = TextEditingController();
+    final emailCtrl = TextEditingController();
+    final passwordCtrl = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+    final authState = ref.watch(authControllerProvider);
     final colorPrimary = const Color(0xFF1E88E5);
+
+    ref.listen<AsyncValue<User?>>(authControllerProvider, (prev, next) {
+      next.whenOrNull(
+        data: (user) {
+          if (user != null) {
+            Navigator.pop(context); // Go back to Sign In
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("Account created successfully!")),
+            );
+          }
+        },
+        error: (err, _) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(err.toString())));
+        },
+      );
+    });
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -31,7 +44,6 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // App logo or minimal icon
                 Icon(Icons.shield_moon_outlined, size: 70, color: colorPrimary),
                 const SizedBox(height: 12),
                 Text(
@@ -51,55 +63,53 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   ),
                 ),
                 const SizedBox(height: 36),
-
-                // Form
                 Form(
-                  key: _formKey,
+                  key: formKey,
                   child: Column(
                     children: [
                       _buildTextField(
-                        controller: _nameCtrl,
+                        controller: nameCtrl,
                         label: "Full Name",
                         icon: Icons.person_outline,
                       ),
                       const SizedBox(height: 16),
                       _buildTextField(
-                        controller: _emailCtrl,
+                        controller: emailCtrl,
                         label: "Email",
                         icon: Icons.email_outlined,
                       ),
                       const SizedBox(height: 16),
                       _buildTextField(
-                        controller: _passwordCtrl,
+                        controller: passwordCtrl,
                         label: "Password",
                         icon: Icons.lock_outline,
-                        obscure: _obscure,
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscure ? Icons.visibility_off : Icons.visibility,
-                            color: Colors.grey,
-                          ),
-                          onPressed: () {
-                            setState(() => _obscure = !_obscure);
-                          },
-                        ),
+                        obscure: true,
                       ),
                       const SizedBox(height: 28),
-
-                      // Sign Up Button
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
-                          onPressed: _isLoading ? null : _onSignUp,
+                          onPressed: authState.isLoading
+                              ? null
+                              : () {
+                                  if (formKey.currentState!.validate()) {
+                                    ref
+                                        .read(authControllerProvider.notifier)
+                                        .signUp(
+                                          emailCtrl.text.trim(),
+                                          passwordCtrl.text.trim(),
+                                          nameCtrl.text.trim(),
+                                        );
+                                  }
+                                },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: colorPrimary,
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            elevation: 2,
                           ),
-                          child: _isLoading
+                          child: authState.isLoading
                               ? const CircularProgressIndicator(
                                   color: Colors.white,
                                 )
@@ -113,10 +123,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                                 ),
                         ),
                       ),
-
                       const SizedBox(height: 20),
-
-                      // Redirect to Sign In
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -131,7 +138,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                             onTap: () => Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => const SignInScreen(),
+                                builder: (_) => const SignInScreen(),
                               ),
                             ),
                             child: Text(
@@ -161,38 +168,21 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     required String label,
     required IconData icon,
     bool obscure = false,
-    Widget? suffixIcon,
   }) {
     return TextFormField(
       controller: controller,
       obscureText: obscure,
+      validator: (val) => val!.isEmpty ? "Enter $label" : null,
       decoration: InputDecoration(
         prefixIcon: Icon(icon, color: Colors.grey),
-        suffixIcon: suffixIcon,
         labelText: label,
-        labelStyle: GoogleFonts.poppins(color: Colors.grey[600], fontSize: 14),
         filled: true,
         fillColor: Colors.grey[100],
-        contentPadding: const EdgeInsets.symmetric(
-          vertical: 16,
-          horizontal: 12,
-        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
         ),
       ),
-      validator: (val) => val!.isEmpty ? "Enter $label" : null,
     );
-  }
-
-  void _onSignUp() {
-    if (_formKey.currentState!.validate()) {
-      setState(() => _isLoading = true);
-      // TODO: Add Firebase logic with Riverpod
-      Future.delayed(const Duration(seconds: 2), () {
-        setState(() => _isLoading = false);
-      });
-    }
   }
 }

@@ -1,24 +1,38 @@
+import 'package:dissaster_mgmnt_app/view/auth_screens/Riverpod/auth_provider.dart';
 import 'package:dissaster_mgmnt_app/view/home_screen/presentation/home_screen.dart';
+import 'package:dissaster_mgmnt_app/view/auth_screens/presentation/sign_up_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'sign_up_screen.dart'; // ✅ Make sure this file exists
 
-class SignInScreen extends StatefulWidget {
+class SignInScreen extends ConsumerWidget {
   const SignInScreen({super.key});
 
   @override
-  State<SignInScreen> createState() => _SignInScreenState();
-}
-
-class _SignInScreenState extends State<SignInScreen> {
-  final _emailCtrl = TextEditingController();
-  final _passwordCtrl = TextEditingController();
-  bool _loading = false;
-  bool _obscure = true;
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final emailCtrl = TextEditingController();
+    final passwordCtrl = TextEditingController();
+    final authState = ref.watch(authControllerProvider);
     final colorPrimary = const Color(0xFF1E88E5);
+
+    ref.listen<AsyncValue<User?>>(authControllerProvider, (prev, next) {
+      next.whenOrNull(
+        data: (user) {
+          if (user != null) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => HomeScreen()),
+            );
+          }
+        },
+        error: (err, _) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(err.toString())));
+        },
+      );
+    });
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -29,7 +43,6 @@ class _SignInScreenState extends State<SignInScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // App icon
                 Icon(Icons.shield_moon_outlined, size: 70, color: colorPrimary),
                 const SizedBox(height: 12),
                 Text(
@@ -49,45 +62,40 @@ class _SignInScreenState extends State<SignInScreen> {
                   ),
                 ),
                 const SizedBox(height: 36),
-
-                // Email
                 _buildTextField(
-                  controller: _emailCtrl,
+                  controller: emailCtrl,
                   label: "Email",
                   icon: Icons.email_outlined,
                 ),
                 const SizedBox(height: 16),
-
-                // Password
                 _buildTextField(
-                  controller: _passwordCtrl,
+                  controller: passwordCtrl,
                   label: "Password",
                   icon: Icons.lock_outline,
-                  obscure: _obscure,
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _obscure ? Icons.visibility_off : Icons.visibility,
-                      color: Colors.grey,
-                    ),
-                    onPressed: () => setState(() => _obscure = !_obscure),
-                  ),
+                  obscure: true,
                 ),
                 const SizedBox(height: 28),
-
-                // Sign In Button
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: _loading ? null : _onLogin,
+                    onPressed: authState.isLoading
+                        ? null
+                        : () {
+                            ref
+                                .read(authControllerProvider.notifier)
+                                .signIn(
+                                  emailCtrl.text.trim(),
+                                  passwordCtrl.text.trim(),
+                                );
+                          },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: colorPrimary,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      elevation: 2,
                     ),
-                    child: _loading
+                    child: authState.isLoading
                         ? const CircularProgressIndicator(color: Colors.white)
                         : Text(
                             "Sign In",
@@ -100,8 +108,6 @@ class _SignInScreenState extends State<SignInScreen> {
                   ),
                 ),
                 const SizedBox(height: 20),
-
-                // Go to Sign Up
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -115,11 +121,8 @@ class _SignInScreenState extends State<SignInScreen> {
                     GestureDetector(
                       onTap: () => Navigator.push(
                         context,
-                        MaterialPageRoute(
-                          builder: (context) => const SignUpScreen(),
-                        ),
+                        MaterialPageRoute(builder: (_) => const SignUpScreen()),
                       ),
-
                       child: Text(
                         "Sign Up",
                         style: GoogleFonts.poppins(
@@ -144,69 +147,20 @@ class _SignInScreenState extends State<SignInScreen> {
     required String label,
     required IconData icon,
     bool obscure = false,
-    Widget? suffixIcon,
   }) {
-    final colorPrimary = const Color(0xFF1E88E5);
-
-    return Focus(
-      child: Builder(
-        builder: (context) {
-          final hasFocus = Focus.of(context).hasFocus;
-          return AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            decoration: BoxDecoration(
-              boxShadow: hasFocus
-                  ? [
-                      BoxShadow(
-                        color: colorPrimary.withOpacity(0.1),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
-                      ),
-                    ]
-                  : [],
-            ),
-            child: TextField(
-              controller: controller,
-              obscureText: obscure,
-              decoration: InputDecoration(
-                prefixIcon: Icon(icon, color: Colors.grey[600]),
-                suffixIcon: suffixIcon,
-                labelText: label,
-                labelStyle: GoogleFonts.poppins(
-                  color: Colors.grey[600],
-                  fontSize: 14,
-                ),
-                filled: true,
-                fillColor: Colors.grey[100],
-                contentPadding: const EdgeInsets.symmetric(
-                  vertical: 16,
-                  horizontal: 12,
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(
-                    color: hasFocus ? colorPrimary : Colors.transparent,
-                    width: hasFocus ? 1.4 : 0,
-                  ),
-                ),
-              ),
-            ),
-          );
-        },
+    return TextField(
+      controller: controller,
+      obscureText: obscure,
+      decoration: InputDecoration(
+        prefixIcon: Icon(icon, color: Colors.grey),
+        labelText: label,
+        filled: true,
+        fillColor: Colors.grey[100],
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
       ),
     );
-  }
-
-  void _onLogin() {
-    setState(() => _loading = true);
-    // TODO: integrate with Firebase Auth
-    Future.delayed(const Duration(seconds: 2), () {
-      setState(() => _loading = false);
-
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => HomeScreen()),
-      );
-    });
   }
 }

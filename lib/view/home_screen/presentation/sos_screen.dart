@@ -1,54 +1,33 @@
-import 'dart:async';
+import 'package:dissaster_mgmnt_app/view/home_screen/riverpod/sos_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-class SosScreen extends StatefulWidget {
+class SosScreen extends ConsumerStatefulWidget {
   const SosScreen({super.key});
 
   @override
-  State<SosScreen> createState() => _SosScreenState();
+  ConsumerState<SosScreen> createState() => _SosScreenState();
 }
 
-class _SosScreenState extends State<SosScreen> {
-  List<String> dummyChats = [
-    "Help! I’m stuck near the bridge!",
-    "We’re on the way 🚑",
-    "Anyone else in this area?",
-  ];
-
-  late Timer _chatTimer;
-
-  @override
-  void initState() {
-    super.initState();
-    _startChatAnimation();
-  }
-
-  void _startChatAnimation() {
-    _chatTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
-      if (dummyChats.length < 10) {
-        setState(() {
-          dummyChats.add(
-            timer.tick % 2 == 0 ? "Rescue team approaching..." : "Stay safe!",
-          );
-        });
-      }
-    });
-  }
+class _SosScreenState extends ConsumerState<SosScreen> {
+  final TextEditingController _msgCtrl = TextEditingController();
 
   @override
   void dispose() {
-    _chatTimer.cancel();
+    _msgCtrl.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final chatState = ref.watch(sosProvider);
     final colorPrimary = const Color(0xFF1E88E5);
+    final currentUserId = ref.read(sosProvider.notifier).currentUserId;
 
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+        padding: const EdgeInsets.all(20),
         child: Column(
           children: [
             Text(
@@ -61,64 +40,59 @@ class _SosScreenState extends State<SosScreen> {
             ),
             const SizedBox(height: 30),
 
-            // Glowing SOS Button
-            Center(
-              child: TweenAnimationBuilder<double>(
-                tween: Tween(begin: 1.0, end: 1.2),
+            // SOS Button
+            GestureDetector(
+              onTap: () async {
+                try {
+                  await ref.read(sosProvider.notifier).sendSOS();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("🚨 SOS Sent!"),
+                      backgroundColor: Colors.redAccent,
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text("❌ Failed to send SOS: $e"),
+                      backgroundColor: Colors.grey[800],
+                      duration: const Duration(seconds: 3),
+                    ),
+                  );
+                }
+              },
+              child: AnimatedContainer(
                 duration: const Duration(seconds: 1),
                 curve: Curves.easeInOut,
-                builder: (context, scale, child) =>
-                    Transform.scale(scale: scale, child: child),
-                onEnd: () => setState(() {}),
-                child: GestureDetector(
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: const Text(
-                          "🚨 SOS Alert Sent!",
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        backgroundColor: Colors.redAccent,
-                        behavior: SnackBarBehavior.floating,
-                        margin: EdgeInsets.only(top: 20, left: 16, right: 16),
-                        duration: const Duration(seconds: 2),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    );
-                  },
-                  child: Container(
-                    width: 140,
-                    height: 140,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.redAccent,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.redAccent.withOpacity(0.6),
-                          blurRadius: 30,
-                          spreadRadius: 10,
-                        ),
-                      ],
+                width: 140,
+                height: 140,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.redAccent,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.redAccent.withOpacity(0.6),
+                      blurRadius: 30,
+                      spreadRadius: 10,
                     ),
-                    child: Center(
-                      child: Text(
-                        "SOS",
-                        style: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                  ],
+                ),
+                child: Center(
+                  child: Text(
+                    "SOS",
+                    style: GoogleFonts.poppins(
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
                     ),
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 40),
+            const SizedBox(height: 30),
 
-            // Live Chat Section
+            // Live Messaging Feed
             Expanded(
               child: Container(
                 decoration: BoxDecoration(
@@ -129,38 +103,82 @@ class _SosScreenState extends State<SosScreen> {
                   horizontal: 16,
                   vertical: 10,
                 ),
-                child: ListView.builder(
-                  itemCount: dummyChats.length,
-                  itemBuilder: (context, index) {
-                    final isUser = index % 2 == 0;
-                    return Align(
-                      alignment: isUser
-                          ? Alignment.centerRight
-                          : Alignment.centerLeft,
-                      child: Container(
-                        margin: const EdgeInsets.symmetric(vertical: 4),
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 10,
-                          horizontal: 14,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isUser
-                              ? colorPrimary.withOpacity(0.1)
-                              : Colors.redAccent.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          dummyChats[index],
-                          style: GoogleFonts.poppins(
-                            fontSize: 13,
-                            color: Colors.black87,
+                child: chatState.when(
+                  data: (messages) {
+                    return ListView.builder(
+                      itemCount: messages.length,
+                      itemBuilder: (context, index) {
+                        final msg = messages[index];
+                        final senderId = msg['senderId'] as String? ?? '';
+                        final isMe = senderId == currentUserId;
+
+                        return Align(
+                          alignment: isMe
+                              ? Alignment.centerRight
+                              : Alignment.centerLeft,
+                          child: Container(
+                            margin: const EdgeInsets.symmetric(vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 10,
+                              horizontal: 14,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isMe
+                                  ? colorPrimary.withOpacity(0.1)
+                                  : Colors.redAccent.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              msg['text'] ?? '',
+                              style: GoogleFonts.poppins(color: Colors.black87),
+                            ),
                           ),
-                        ),
-                      ),
+                        );
+                      },
                     );
                   },
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
+                  error: (err, _) => Center(child: Text("Error: $err")),
                 ),
               ),
+            ),
+
+            const SizedBox(height: 10),
+
+            // Message Input Field
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _msgCtrl,
+                    decoration: InputDecoration(
+                      hintText: "Type message...",
+                      fillColor: Colors.grey[100],
+                      filled: true,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        vertical: 10,
+                        horizontal: 16,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: const Icon(Icons.send, color: Colors.redAccent),
+                  onPressed: () async {
+                    final msg = _msgCtrl.text.trim();
+                    if (msg.isNotEmpty) {
+                      await ref.read(sosProvider.notifier).sendMessage(msg);
+                      _msgCtrl.clear();
+                    }
+                  },
+                ),
+              ],
             ),
           ],
         ),
