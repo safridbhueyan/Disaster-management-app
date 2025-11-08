@@ -1,3 +1,4 @@
+import 'package:dissaster_mgmnt_app/view/home_screen/presentation/map/disasterdistence.dart';
 import 'package:dissaster_mgmnt_app/view/home_screen/riverpod/googlemap.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -18,7 +19,7 @@ class MapScreen extends StatelessWidget {
                 return googleMapState.isLoading
                     ? Center(child: CircularProgressIndicator())
                     : Padding(
-                        padding: EdgeInsets.only(bottom: 60),
+                        padding: EdgeInsets.only(bottom: 4),
                         child: GoogleMap(
                           padding: EdgeInsets.only(top: 45, right: 20),
                           myLocationEnabled: true,
@@ -58,8 +59,8 @@ class MapScreen extends StatelessWidget {
             left: 0,
             right: 0,
             child: Padding(
-              padding: EdgeInsetsGeometry.all(5),
-              child: SizedBox(),
+              padding: EdgeInsetsGeometry.all(12),
+              child: Disasterdistence(),
             ),
           ),
         ],

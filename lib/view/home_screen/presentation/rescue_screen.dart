@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:dissaster_mgmnt_app/view/home_screen/riverpod/sos_provider.dart';
+import 'rescue_details_screen.dart'; // ✅ import the details screen
 
 class RescueScreen extends ConsumerWidget {
   const RescueScreen({super.key});
@@ -40,112 +41,126 @@ class RescueScreen extends ConsumerWidget {
                   ? DateFormat('dd/MM/yyyy HH:mm').format(alert.timestamp!)
                   : "Unknown time";
 
-              return Card(
-                margin: const EdgeInsets.symmetric(vertical: 8),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                elevation: 3,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
+              return GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => RescueDetailsScreen(alert: alert),
+                    ),
+                  );
+                },
+                child: Card(
+                  margin: const EdgeInsets.symmetric(vertical: 8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Header row
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            alert.userEmail,
-                            style: GoogleFonts.poppins(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
+                  elevation: 3,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Header row
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              alert.userEmail,
+                              style: GoogleFonts.poppins(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                          ),
-                          const Icon(
-                            Icons.warning_amber_rounded,
-                            color: Colors.redAccent,
-                            size: 28,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
+                            const Icon(
+                              Icons.warning_amber_rounded,
+                              color: Colors.redAccent,
+                              size: 28,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
 
-                      // Coordinates
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.location_on,
-                            size: 16,
-                            color: Colors.grey,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            "(${alert.latitude ?? 'N/A'}, ${alert.longitude ?? 'N/A'})",
-                            style: GoogleFonts.poppins(fontSize: 13),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-
-                      // Address
-                      Row(
-                        children: [
-                          const Icon(Icons.place, size: 16, color: Colors.grey),
-                          const SizedBox(width: 4),
-                          Expanded(
-                            child: Text(
-                              alert.address,
+                        // Coordinates
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.location_on,
+                              size: 16,
+                              color: Colors.grey,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              "(${alert.latitude ?? 'N/A'}, ${alert.longitude ?? 'N/A'})",
                               style: GoogleFonts.poppins(fontSize: 13),
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
 
-                      // Timestamp
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.access_time,
-                            size: 16,
-                            color: Colors.grey,
+                        // Address
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.place,
+                              size: 16,
+                              color: Colors.grey,
+                            ),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                alert.address,
+                                style: GoogleFonts.poppins(fontSize: 13),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+
+                        // Timestamp
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.access_time,
+                              size: 16,
+                              color: Colors.grey,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              dateStr,
+                              style: GoogleFonts.poppins(
+                                fontSize: 13,
+                                color: Colors.grey[700],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+
+                        // Status tag
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
                           ),
-                          const SizedBox(width: 4),
-                          Text(
-                            dateStr,
+                          decoration: BoxDecoration(
+                            color: Colors.redAccent.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            "SOS Signal Active",
                             style: GoogleFonts.poppins(
-                              fontSize: 13,
-                              color: Colors.grey[700],
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.redAccent,
                             ),
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-
-                      // Status tag
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
                         ),
-                        decoration: BoxDecoration(
-                          color: Colors.redAccent.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          "SOS Signal Active",
-                          style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.redAccent,
-                          ),
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               );

@@ -2,7 +2,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.example.dissaster_mgmnt_app">
 
-    <!-- Permissions -->
+    <!-- ✅ Permissions -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
@@ -15,6 +15,11 @@
         android:name="${applicationName}"
         android:label="dissaster_mgmnt_app"
         android:icon="@mipmap/ic_launcher">
+
+        <!-- ✅ GOOGLE MAPS API KEY GOES HERE (inside <application>) -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyDUjNaRwWEUbn__efy3duv9cFQak66jI4o" />
 
         <activity
             android:name=".MainActivity"
@@ -29,17 +34,13 @@
                 android:name="io.flutter.embedding.android.NormalTheme"
                 android:resource="@style/NormalTheme" />
 
-            <meta-data
-                android:name="com.google.android.geo.API_KEY"
-                android:value="YOUR_API_KEY_HERE" />
-
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
-        <!-- ✅ Override the Firebase Messaging Service conflict -->
+        <!-- ✅ Firebase Messaging Service fix -->
         <service
             android:name="com.google.firebase.messaging.FirebaseMessagingService"
             android:exported="true"
@@ -70,4 +71,5 @@
             <data android:mimeType="text/plain" />
         </intent>
     </queries>
+
 </manifest>

@@ -1,5 +1,6 @@
 import 'package:dissaster_mgmnt_app/model/zoo_model.dart';
 import 'package:dissaster_mgmnt_app/view/home_screen/riverpod/map_riverpod.dart';
+import 'package:dissaster_mgmnt_app/view/home_screen/riverpod/map_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/legacy.dart';
@@ -47,7 +48,7 @@ class GoogleMapNotifier extends StateNotifier<GoogleMapState> {
   Future<void> _loadCustomMarker() async {
     final customIcon = await BitmapDescriptor.asset(
       ImageConfiguration(size: Size(48, 48)),
-      "assets/icons/all_icons/marker.bmp",
+      "assets/dis.bmp",
     );
     state = state.copyWith(customIconFuture: customIcon);
   }
@@ -71,17 +72,15 @@ class GoogleMapNotifier extends StateNotifier<GoogleMapState> {
       }
     }
 
-    final mapStyle = await rootBundle.loadString(
-      'assets/map_style/map_style.json',
-    );
+    final mapStyle = await rootBundle.loadString('assets/map_style.json');
+
     state = state.copyWith(
       nearestZoo: closestZoo,
       distanceToNearestZoo: closestDistance.roundToDouble() / 1000,
       mapStyle: mapStyle,
-
-      /// Convert meters to km
     );
-    _loadCustomMarker();
+
+    await _loadCustomMarker();
 
     state = state.copyWith(isLoading: false);
   }

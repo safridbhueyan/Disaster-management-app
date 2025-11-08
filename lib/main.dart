@@ -1,5 +1,7 @@
 import 'package:dissaster_mgmnt_app/firebase_options.dart';
 import 'package:dissaster_mgmnt_app/view/auth_screens/presentation/sign_up_screen.dart';
+import 'package:dissaster_mgmnt_app/view/home_screen/presentation/home_screen.dart';
+import 'package:dissaster_mgmnt_app/view/home_screen/riverpod/locationservice.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -8,19 +10,20 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-// Handle background FCM messages
+// ✅ Handle background FCM messages
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   print("📩 Handling background message: ${message.messageId}");
 }
 
-// Local notifications plugin
+// ✅ Local notifications plugin
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await LocationService.instance.getPermission();
 
   // Register background FCM handler
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
@@ -56,11 +59,11 @@ class _MyAppState extends State<MyApp> {
     _initNotifications();
   }
 
-  // 🔹 Initialize FCM, permissions, and token saving
+  // ✅ Initialize FCM, permissions, and token saving
   Future<void> _initNotifications() async {
     FirebaseMessaging messaging = FirebaseMessaging.instance;
 
-    // Ask permission
+    // Request notification permissions
     NotificationSettings settings = await messaging.requestPermission(
       alert: true,
       badge: true,
@@ -73,7 +76,7 @@ class _MyAppState extends State<MyApp> {
     String? token = await messaging.getToken();
     print("📱 FCM Token: $token");
 
-    // ✅ Save token to Firestore (if user logged in)
+    // ✅ Save token to Firestore if user logged in
     final user = FirebaseAuth.instance.currentUser;
     if (user != null && token != null) {
       await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
@@ -83,7 +86,7 @@ class _MyAppState extends State<MyApp> {
       print("✅ Token saved to Firestore");
     }
 
-    // Keep token updated if refreshed
+    // Keep token updated when refreshed
     FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
@@ -102,7 +105,7 @@ class _MyAppState extends State<MyApp> {
       if (notification != null && android != null) {
         flutterLocalNotificationsPlugin.show(
           notification.hashCode,
-          notification.title ?? "SOS Alert",
+          notification.title ?? "🚨 SOS Alert",
           notification.body ?? "Someone nearby needs help!",
           const NotificationDetails(
             android: AndroidNotificationDetails(
@@ -117,7 +120,7 @@ class _MyAppState extends State<MyApp> {
       }
     });
 
-    // Handle notification tap when app is backgrounded
+    // Handle when app is opened by tapping a notification
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
       print("🚀 Notification clicked while backgrounded: ${message.data}");
     });
@@ -128,10 +131,31 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       title: 'Disaster Management App',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.redAccent),
+        useMaterial3: true,
       ),
       debugShowCheckedModeBanner: false,
-      home: const SignUpScreen(),
+
+      // ✅ Listen to auth state and keep user logged in
+      home: StreamBuilder<User?>(
+        stream: FirebaseAuth.instance.authStateChanges(),
+        builder: (context, snapshot) {
+          // Still loading Firebase user
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Scaffold(
+              body: Center(child: CircularProgressIndicator()),
+            );
+          }
+
+          // User logged in → go to HomeScreen
+          if (snapshot.hasData) {
+            return const HomeScreen();
+          }
+
+          // User not logged in → go to SignUp/Login
+          return const SignUpScreen();
+        },
+      ),
     );
   }
 }
