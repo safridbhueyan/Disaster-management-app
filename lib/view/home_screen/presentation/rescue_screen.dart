@@ -1,9 +1,8 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:dissaster_mgmnt_app/view/home_screen/riverpod/sos_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:dissaster_mgmnt_app/view/home_screen/riverpod/sos_provider.dart';
 
 class RescueScreen extends ConsumerWidget {
   const RescueScreen({super.key});
@@ -37,8 +36,6 @@ class RescueScreen extends ConsumerWidget {
             itemCount: alerts.length,
             itemBuilder: (context, index) {
               final alert = alerts[index];
-
-              // Format date & time
               final dateStr = alert.timestamp != null
                   ? DateFormat('dd/MM/yyyy HH:mm').format(alert.timestamp!)
                   : "Unknown time";
@@ -48,7 +45,7 @@ class RescueScreen extends ConsumerWidget {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
-                elevation: 4,
+                elevation: 3,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
@@ -57,7 +54,7 @@ class RescueScreen extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Top row: User & SOS icon
+                      // Header row
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -94,7 +91,7 @@ class RescueScreen extends ConsumerWidget {
                       ),
                       const SizedBox(height: 4),
 
-                      // Full address
+                      // Address
                       Row(
                         children: [
                           const Icon(Icons.place, size: 16, color: Colors.grey),
@@ -129,7 +126,7 @@ class RescueScreen extends ConsumerWidget {
                       ),
                       const SizedBox(height: 6),
 
-                      // Status
+                      // Status tag
                       Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 8,

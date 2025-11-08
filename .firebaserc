@@ -1,5 +1,8 @@
 {
   "projects": {
-    "default": "disasterlink-22fd5"
-  }
+    "default": "disasterlink-22fd5",
+    "notification": "disasterlink-22fd5"
+  },
+  "targets": {},
+  "etags": {}
 }

@@ -1,32 +1,36 @@
-/**
- * Import function triggers from their respective submodules:
- *
- * const {onCall} = require("firebase-functions/v2/https");
- * const {onDocumentWritten} = require("firebase-functions/v2/firestore");
- *
- * See a full list of supported triggers at https://firebase.google.com/docs/functions
- */
+const functions = require("firebase-functions");
+const admin = require("firebase-admin");
+admin.initializeApp();
 
-const {setGlobalOptions} = require("firebase-functions");
-const {onRequest} = require("firebase-functions/https");
-const logger = require("firebase-functions/logger");
+exports.sendSOSNotification = functions.firestore
+  .document("sos_alerts/{docId}")
+  .onCreate(async (snap, context) => {
+    const data = snap.data();
+    const senderEmail = data.email || "Someone";
 
-// For cost control, you can set the maximum number of containers that can be
-// running at the same time. This helps mitigate the impact of unexpected
-// traffic spikes by instead downgrading performance. This limit is a
-// per-function limit. You can override the limit for each function using the
-// `maxInstances` option in the function's options, e.g.
-// `onRequest({ maxInstances: 5 }, (req, res) => { ... })`.
-// NOTE: setGlobalOptions does not apply to functions using the v1 API. V1
-// functions should each use functions.runWith({ maxInstances: 10 }) instead.
-// In the v1 API, each function can only serve one request per container, so
-// this will be the maximum concurrent request count.
-setGlobalOptions({ maxInstances: 10 });
+    // Get all user tokens
+    const usersSnap = await admin.firestore().collection("users").get();
 
-// Create and deploy your first functions
-// https://firebase.google.com/docs/functions/get-started
+    const tokens = [];
+    usersSnap.forEach((doc) => {
+      const userToken = doc.data().token;
+      if (userToken) tokens.push(userToken);
+    });
 
-// exports.helloWorld = onRequest((request, response) => {
-//   logger.info("Hello logs!", {structuredData: true});
-//   response.send("Hello from Firebase!");
-// });
+    // Create notification payload
+    const payload = {
+      notification: {
+        title: "🚨 SOS Alert!",
+        body: `${senderEmail} triggered an SOS alert.`,
+      },
+      data: {
+        click_action: "FLUTTER_NOTIFICATION_CLICK",
+        route: "/rescue",
+      },
+    };
+
+    if (tokens.length > 0) {
+      await admin.messaging().sendToDevice(tokens, payload);
+      console.log(`Sent SOS alert to ${tokens.length} users`);
+    }
+  });

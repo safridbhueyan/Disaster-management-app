@@ -34,12 +34,10 @@ class GoogleMapNotifier extends StateNotifier<GoogleMapState> {
       Position? position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
       );
-      if (position != null) {
-        state = state.copyWith(
-          currentLocation: LatLng(position.latitude, position.longitude),
-        );
-        _findNearestZoo(position.latitude, position.longitude);
-      }
+      state = state.copyWith(
+        currentLocation: LatLng(position.latitude, position.longitude),
+      );
+      _findNearestZoo(position.latitude, position.longitude);
     } catch (e) {
       /// Handle location error
       state = state.copyWith(errorMessage: "Unable to fetch location");

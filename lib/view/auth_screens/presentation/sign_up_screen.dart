@@ -21,7 +21,10 @@ class SignUpScreen extends ConsumerWidget {
       next.whenOrNull(
         data: (user) {
           if (user != null) {
-            Navigator.pop(context); // Go back to Sign In
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => SignInScreen()),
+            ); // Go back to Sign In
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text("Account created successfully!")),
             );

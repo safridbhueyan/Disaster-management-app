@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 // Handle background FCM messages
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -12,7 +14,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   print("📩 Handling background message: ${message.messageId}");
 }
 
-// Initialize local notifications plugin
+// Local notifications plugin
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
 
@@ -20,7 +22,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  // Background FCM handler
+  // Register background FCM handler
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
   // Initialize local notifications
@@ -33,7 +35,6 @@ void main() async {
   await flutterLocalNotificationsPlugin.initialize(
     initSettings,
     onDidReceiveNotificationResponse: (NotificationResponse response) {
-      // Handle notification tap if needed
       print("🔔 Notification clicked: ${response.payload}");
     },
   );
@@ -55,22 +56,44 @@ class _MyAppState extends State<MyApp> {
     _initNotifications();
   }
 
-  // Initialize FCM and notification permissions
+  // 🔹 Initialize FCM, permissions, and token saving
   Future<void> _initNotifications() async {
     FirebaseMessaging messaging = FirebaseMessaging.instance;
 
-    // Ask user permission for notifications (Android 13+ / iOS)
+    // Ask permission
     NotificationSettings settings = await messaging.requestPermission(
       alert: true,
       badge: true,
       sound: true,
     );
 
-    print('🔔 User granted permission: ${settings.authorizationStatus}');
+    print('🔔 Permission status: ${settings.authorizationStatus}');
 
-    // Get and print FCM token
+    // Get FCM token
     String? token = await messaging.getToken();
     print("📱 FCM Token: $token");
+
+    // ✅ Save token to Firestore (if user logged in)
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null && token != null) {
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+        'email': user.email,
+        'token': token,
+      }, SetOptions(merge: true));
+      print("✅ Token saved to Firestore");
+    }
+
+    // Keep token updated if refreshed
+    FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .update({'token': newToken});
+        print("🔄 Token refreshed and updated in Firestore");
+      }
+    });
 
     // Handle foreground messages
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
@@ -94,10 +117,9 @@ class _MyAppState extends State<MyApp> {
       }
     });
 
-    // Handle when app is opened by tapping a notification
+    // Handle notification tap when app is backgrounded
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      print("🚀 Notification clicked while app in background: ${message.data}");
-      // TODO: Navigate to SOS map or details screen if needed
+      print("🚀 Notification clicked while backgrounded: ${message.data}");
     });
   }
 

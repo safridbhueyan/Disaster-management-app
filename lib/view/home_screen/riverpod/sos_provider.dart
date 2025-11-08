@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:geolocator/geolocator.dart';
@@ -155,4 +156,23 @@ class SOSAlert {
     this.timestamp,
     required this.address,
   });
+}
+
+Future<void> saveUserToken() async {
+  final user = FirebaseAuth.instance.currentUser;
+  if (user == null) return;
+
+  try {
+    // Get the device’s current FCM token
+    final token = await FirebaseMessaging.instance.getToken();
+    print('📱 FCM Token: $token');
+
+    // Save or update the token in Firestore
+    await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+      'email': user.email,
+      'token': token,
+    }, SetOptions(merge: true));
+  } catch (e) {
+    print('⚠️ Error saving token: $e');
+  }
 }
