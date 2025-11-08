@@ -53,6 +53,10 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions android = FirebaseOptions(
-    
+    apiKey: 'AIzaSyB5jThQIQ5rVCFxGzayL1ilIYD8B-JIiLU',
+    appId: '1:445794335111:android:99e7023cb820f78a54fb22',
+    messagingSenderId: '445794335111',
+    projectId: 'disasterlink-22fd5',
+    storageBucket: 'disasterlink-22fd5.firebasestorage.app',
   );
 }

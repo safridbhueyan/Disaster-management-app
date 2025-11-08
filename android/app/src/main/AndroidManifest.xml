@@ -13,8 +13,8 @@
 
     <application
         android:name="${applicationName}"
-        android:label="dissaster_mgmnt_app"
-        android:icon="@mipmap/ic_launcher">
+        android:label="DisasterLink"
+        android:icon="@mipmap/launcher_icon">
 
         <!-- ✅ GOOGLE MAPS API KEY GOES HERE (inside <application>) -->
         <meta-data
